@@ -1,19 +1,10 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 
 const Confirm = ({ form, onPrev }: { form: any; onPrev: () => void }) => {
-  const router = useRouter();
-
   const values = form.getValues();
-
-  const onSubmit = async (data) => {
-    console.log(data);
-    router.push("/");
-  };
 
   return (
     <>
@@ -28,8 +19,8 @@ const Confirm = ({ form, onPrev }: { form: any; onPrev: () => void }) => {
         <div>
           {/* ポイント. FileListはArrayでない https://zenn.dev/tokiya_horikawa/articles/8270949e4f027fce4d66 */}
           {values.attachedFiles &&
-            Array.from(values.attachedFiles).map((file: any) => {
-              return <div>{file.name}</div>;
+            values.attachedFiles.map((file: File, index: number) => {
+              return <div key={index}>{file.name}</div>;
             })}
         </div>
         <Separator className="my-4" />

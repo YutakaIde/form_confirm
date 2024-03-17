@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useFormState } from "react-dom";
 
 // form
 import * as z from "zod";
@@ -23,37 +22,54 @@ const contactSchema = z.object({
     .string()
     .min(1, { message: "お問い合わせを入力してください" })
     .max(30, { message: "お問い合わせは30文字以内で入力してください" }),
-  attachedFiles: z.custom<FileList>(),
+  attachedFiles: z.custom<Array<File>>().refine((files: Array<File>) => {
+    const total = files.reduce((sum: number, file: File) => {
+      return sum + file.size;
+    }, 0);
+    return total <= 400000 ? true : false;
+  }, "合計サイズを 4000000 以下にしてください。"),
 });
 
 const Contact = () => {
   const [pageNumber, setPageNumber] = useState(0);
 
   const onNext = () => {
-    setPageNumber((state) => state + 1);
+    setPageNumber((state: number) => state + 1);
   };
 
   const onPrev = () => {
-    setPageNumber((state) => state - 1);
+    setPageNumber((state: number) => state - 1);
   };
 
-  const [lastResult, action] = useFormState(contactAction, undefined);
+  const onSubmit = async (data) => {
+    const values = form.getValues();
+    const formData = new FormData();
+
+    formData.append("username", values.username);
+    formData.append("content", values.content);
+
+    Array.from(values.attachedFiles).map((file: any, index: any) => {
+      formData.append(`attachedFiles`, file);
+    });
+
+    contactAction(formData);
+  };
 
   const form = useForm<z.infer<typeof contactSchema>>({
-    lastResult,
     criteriaMode: "all",
     mode: "onChange",
     resolver: zodResolver(contactSchema),
     defaultValues: {
       username: "",
       content: "",
+      attachedFiles: [],
     },
   });
 
   return (
     <div>
-      <Form {...form} onSubmit={form.onSubmit} action={action}>
-        <form>
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)}>
           {pageNumber === 0 ? (
             <>
               <Entry form={form} onNext={onNext} />
